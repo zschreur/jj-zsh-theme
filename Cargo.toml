@@ -1,0 +1,8 @@
+[package]
+name = "jj-zsh-theme"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "jj-zsh-theme"
+path = "src/main.rs"
