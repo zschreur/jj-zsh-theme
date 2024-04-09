@@ -1,5 +1,7 @@
 const CMD: char = '\u{f4b5}';
 const CWD: char = '\u{f07c}';
+const MID_COMMIT: char = '\u{eafc}';
+const LEAF: char = '\u{f032a}';
 
 // https://man.archlinux.org/man/zshmisc.1#SIMPLE_PROMPT_ESCAPES
 // https://wiki.archlinux.org/title/Zsh#Customized_prompt
@@ -38,18 +40,26 @@ fn write_init() {
 }
 
 fn write_cwd() {
-    print!("%F{{default}}[%~ {} ]%f ", CWD); // Current working directory, with 2 components
+    print!("%F{{246}}[%~ {} ]%f ", CWD); // Current working directory, with 2 components
 }
 
 fn main() {
     write_init();
     write_cwd();
+    let has_parent = match parent_change() {
+        Some(parent_change) => !parent_change.is_empty(),
+        _ => false,
+    };
     match change_id() {
-        Ok(change_id) => print!("%F{{127}}{} %f", change_id),
+        Ok(change_id) => {
+            print!("%B%F{{magenta}}{} %f%b", change_id);
+            if has_parent {
+                print!("%F{{88}}{} ", MID_COMMIT)
+            } else {
+                print!("%F{{green}}{} ", LEAF)
+            }
+            print!("%f")
+        },
         Err(_) => (),
-    }
-    match parent_change() {
-        Some(parent_change) => print!("%F{{127}}{} %f", parent_change),
-        None => (),
     }
 }
