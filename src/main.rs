@@ -6,40 +6,44 @@ const LEAF: char = '\u{f032a}';
 // https://man.archlinux.org/man/zshmisc.1#SIMPLE_PROMPT_ESCAPES
 // https://wiki.archlinux.org/title/Zsh#Customized_prompt
 
-fn change_id_for_revision(rev: &str) -> Result<(String, String), Box<dyn std::error::Error>> {
+struct JJStatus {
+    change_id: (String, String),
+    child_change_id: Option<(String, String)>,
+}
+
+fn get_jj_status() -> Result<JJStatus, Box<dyn std::error::Error>> {
     let output = std::process::Command::new("jj")
         .arg("log")
         .arg("-r")
-        .arg(rev)
+        .arg("@::")
+        .arg("--limit=2")
+        .arg("--reversed")
         .arg("-T")
-        .arg(r#"concat(change_id.shortest(8).prefix(), "\n", change_id.shortest(8).rest())"#)
+        .arg(r#"concat(change_id.shortest(8).prefix(), "-", change_id.shortest(8).rest(), "\n")"#)
         .arg("--no-pager")
         .arg("--no-graph")
-        .arg("--limit=1")
         .arg("--ignore-working-copy")
         .arg("--quiet")
         .output()?;
 
     if !output.status.success() {
-        return Err("jj log failed".into());
+        return Err("jj command failed".into());
     }
 
     let output = String::from_utf8(output.stdout)?;
-    let output: Vec<&str> = output.trim().split('\n').collect();
-    let prefix = output.get(0).unwrap_or(&"").to_string();
-    let suffix = output.get(1).unwrap_or(&"").to_string();
-    Ok((prefix, suffix))
-}
+    let output: Vec<(String, String)> = output
+        .trim()
+        .split('\n')
+        .map(|line| {
+            let parts: Vec<&str> = line.split('-').collect();
+            (parts[0].to_string(), parts[1].to_string())
+        })
+        .collect();
 
-fn change_id() -> Result<(String, String), Box<dyn std::error::Error>> {
-    change_id_for_revision("@")
-}
-
-fn child() -> Option<(String, String)> {
-    match change_id_for_revision("@+") {
-        Ok(c) => Some(c),
-        _ => None,
-    }
+    Ok(JJStatus {
+        change_id: output[0].to_owned(),
+        child_change_id: output.get(1).map(|x| x.to_owned()),
+    })
 }
 
 fn write_init() {
@@ -50,23 +54,30 @@ fn write_cwd() {
     print!("%F{{246}}[%~ {} ]%f ", CWD);
 }
 
+fn is_in_jj_repo() -> bool {
+    std::path::Path::new(".jj").exists()
+}
+
 fn main() {
     write_init();
     write_cwd();
-    let has_child = match child() {
-        Some((child_change, _)) => !child_change.is_empty(),
-        _ => false,
-    };
-    match change_id() {
-        Ok(change_id) => {
-            print!("( %B%F{{magenta}}{}%f%b%F{{244}}{} %f", change_id.0, change_id.1);
-            if has_child {
-                print!("%F{{202}}{}", MID_COMMIT)
-            } else {
-                print!("%F{{green}}{}", LEAF)
-            }
-            print!("%f ) ")
-        },
-        Err(_) => (),
+    if !is_in_jj_repo() {
+        return;
     }
+
+    let jj_status = match get_jj_status() {
+        Ok(status) => status,
+        Err(_) => return,
+    };
+    let has_child = jj_status.child_change_id.is_some();
+    print!(
+        "( %B%F{{magenta}}{}%f%b%F{{244}}{} %f",
+        jj_status.change_id.0, jj_status.change_id.1
+    );
+    if has_child {
+        print!("%F{{202}}{}", MID_COMMIT)
+    } else {
+        print!("%F{{green}}{}", LEAF)
+    }
+    print!("%f ) ")
 }
