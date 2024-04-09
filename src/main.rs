@@ -1,7 +1,11 @@
-const CMD: char = '\u{f4b5}';
+const INIT: char = '\u{f01e5}';
 const CWD: char = '\u{f07c}';
 const MID_COMMIT: char = '\u{eafc}';
 const LEAF: char = '\u{f032a}';
+
+fn write_init() {
+    print!("%F{{38}}{} %f", INIT);
+}
 
 // https://man.archlinux.org/man/zshmisc.1#SIMPLE_PROMPT_ESCAPES
 // https://wiki.archlinux.org/title/Zsh#Customized_prompt
@@ -44,10 +48,6 @@ fn get_jj_status() -> Result<JJStatus, Box<dyn std::error::Error>> {
         change_id: output[0].to_owned(),
         child_change_id: output.get(1).map(|x| x.to_owned()),
     })
-}
-
-fn write_init() {
-    print!("%F{{38}}{} %f", CMD);
 }
 
 fn write_cwd() {
