@@ -15,6 +15,8 @@ fn change_id_for_revision(rev: &str) -> Result<String, Box<dyn std::error::Error
         .arg("change_id.shortest()")
         .arg("--no-pager")
         .arg("--no-graph")
+        .arg("--ignore-working-copy")
+        .arg("--quiet")
         .output()?;
 
     if !output.status.success() {
