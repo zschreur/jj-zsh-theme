@@ -52,13 +52,13 @@ fn main() {
     };
     match change_id() {
         Ok(change_id) => {
-            print!("%B%F{{magenta}}{} %f%b", change_id);
+            print!("( %B%F{{magenta}}{} %f%b", change_id);
             if has_parent {
-                print!("%F{{88}}{} ", MID_COMMIT)
+                print!("%F{{202}}{}", MID_COMMIT)
             } else {
-                print!("%F{{green}}{} ", LEAF)
+                print!("%F{{green}}{}", LEAF)
             }
-            print!("%f")
+            print!("%f ) ")
         },
         Err(_) => (),
     }
