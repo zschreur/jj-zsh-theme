@@ -38,11 +38,11 @@ fn parent_change() -> Option<String> {
 }
 
 fn write_init() {
-    print!("%F{{38}}{} %f", CMD); // Command symbol
+    print!("%F{{38}}{} %f", CMD);
 }
 
 fn write_cwd() {
-    print!("%F{{246}}[%~ {} ]%f ", CWD); // Current working directory, with 2 components
+    print!("%F{{246}}[%~ {} ]%f ", CWD);
 }
 
 fn main() {
