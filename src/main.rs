@@ -15,6 +15,7 @@ fn change_id_for_revision(rev: &str) -> Result<(String, String), Box<dyn std::er
         .arg(r#"concat(change_id.shortest(8).prefix(), "\n", change_id.shortest(8).rest())"#)
         .arg("--no-pager")
         .arg("--no-graph")
+        .arg("--limit=1")
         .arg("--ignore-working-copy")
         .arg("--quiet")
         .output()?;
