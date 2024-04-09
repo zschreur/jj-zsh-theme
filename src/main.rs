@@ -6,13 +6,13 @@ const LEAF: char = '\u{f032a}';
 // https://man.archlinux.org/man/zshmisc.1#SIMPLE_PROMPT_ESCAPES
 // https://wiki.archlinux.org/title/Zsh#Customized_prompt
 
-fn change_id_for_revision(rev: &str) -> Result<String, Box<dyn std::error::Error>> {
+fn change_id_for_revision(rev: &str) -> Result<(String, String), Box<dyn std::error::Error>> {
     let output = std::process::Command::new("jj")
         .arg("log")
         .arg("-r")
         .arg(rev)
         .arg("-T")
-        .arg("change_id.shortest()")
+        .arg(r#"concat(change_id.shortest(8).prefix(), "\n", change_id.shortest(8).rest())"#)
         .arg("--no-pager")
         .arg("--no-graph")
         .arg("--ignore-working-copy")
@@ -23,14 +23,18 @@ fn change_id_for_revision(rev: &str) -> Result<String, Box<dyn std::error::Error
         return Err("jj log failed".into());
     }
 
-    Ok(String::from_utf8(output.stdout).map(|s| s.trim().to_string())?)
+    let output = String::from_utf8(output.stdout)?;
+    let output: Vec<&str> = output.trim().split('\n').collect();
+    let prefix = output.get(0).unwrap_or(&"").to_string();
+    let suffix = output.get(1).unwrap_or(&"").to_string();
+    Ok((prefix, suffix))
 }
 
-fn change_id() -> Result<String, Box<dyn std::error::Error>> {
+fn change_id() -> Result<(String, String), Box<dyn std::error::Error>> {
     change_id_for_revision("@")
 }
 
-fn parent_change() -> Option<String> {
+fn child() -> Option<(String, String)> {
     match change_id_for_revision("@+") {
         Ok(c) => Some(c),
         _ => None,
@@ -48,14 +52,14 @@ fn write_cwd() {
 fn main() {
     write_init();
     write_cwd();
-    let has_parent = match parent_change() {
-        Some(parent_change) => !parent_change.is_empty(),
+    let has_child = match child() {
+        Some((child_change, _)) => !child_change.is_empty(),
         _ => false,
     };
     match change_id() {
         Ok(change_id) => {
-            print!("( %B%F{{magenta}}{} %f%b", change_id);
-            if has_parent {
+            print!("( %B%F{{magenta}}{}%f%b%F{{244}}{} %f", change_id.0, change_id.1);
+            if has_child {
                 print!("%F{{202}}{}", MID_COMMIT)
             } else {
                 print!("%F{{green}}{}", LEAF)
