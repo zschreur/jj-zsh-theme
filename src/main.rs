@@ -1,6 +1,6 @@
 const INIT: char = '\u{f01e5}';
 const CWD: char = '\u{f07c}';
-const MID_COMMIT: char = '\u{eafc}';
+const PARENT_COMMIT: char = '\u{eafc}';
 const LEAF: char = '\u{f032a}';
 
 fn write_init() {
@@ -75,7 +75,7 @@ fn main() {
         jj_status.change_id.0, jj_status.change_id.1
     );
     if has_child {
-        print!("%F{{202}}{}", MID_COMMIT)
+        print!("%F{{202}}{}", PARENT_COMMIT)
     } else {
         print!("%F{{green}}{}", LEAF)
     }
