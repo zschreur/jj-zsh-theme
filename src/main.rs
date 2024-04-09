@@ -38,7 +38,7 @@ fn parent_change() -> Option<String> {
 }
 
 fn write_init() {
-    print!("%F{{cyan}}{} %f", CMD); // Command symbol
+    print!("%F{{38}}{} %f", CMD); // Command symbol
 }
 
 fn write_cwd() {
