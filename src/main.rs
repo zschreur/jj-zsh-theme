@@ -55,7 +55,12 @@ fn write_cwd() {
 }
 
 fn is_in_jj_repo() -> bool {
-    std::path::Path::new(".jj").exists()
+    std::process::Command::new("jj")
+        .arg("root")
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .is_ok_and(|s| s.success())
 }
 
 fn main() {
